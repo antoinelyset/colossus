@@ -39,6 +39,8 @@ class Colossus
       def handle_user_action(message)
         if message['channel'] == '/meta/subscribe'
           handle_subscribe(message)
+        elsif message['channel'].start_with?('/meta/')
+          message
         elsif message['channel'].start_with?('/users/')
           handle_set_status(message)
         else
@@ -57,7 +59,10 @@ class Colossus
           return message
         end
 
-        if message['channel'] == '/presences'
+        if message['channel'].start_with?('/meta/')
+          message.delete('data')
+          message
+        elsif message['channel'] == '/presences'
           handle_presence_request(message)
         elsif message['channel'].start_with?('/users/')
           handle_publish(message)

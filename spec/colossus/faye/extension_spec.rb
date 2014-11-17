@@ -52,6 +52,18 @@ describe Colossus::Faye::Extension do
   end
 
   context 'when there is a user token' do
+    context 'when this is an authorized meta channel' do
+      it 'returns the channel' do
+        message = {
+          'ext'     => { 'user_push_token' => user_token },
+          'channel' => '/meta/handshake'
+        }
+        expected_message = { 'channel' => '/meta/handshake' }
+        callback = Proc.new { |_message| expect(_message).to eq(expected_message) }
+        subject.incoming(message, nil, callback)
+      end
+    end
+
     context 'when this is a subscribe' do
       it 'returns an ok hash for a correct token' do
         message = {
@@ -296,6 +308,18 @@ describe Colossus::Faye::Extension do
         allow(colossus_double).to receive(:get_multi).and_return(['active', 'active'])
         callback = Proc.new { |_message| expect(_message).to eq(expected_message) }
         subject.class.new(colossus_double, token_verifier).incoming(message, nil, callback)
+      end
+    end
+
+    context 'when this is an authorized meta channel' do
+      it 'returns the channel' do
+        message = {
+          'ext'     => { 'user_push_token' => user_token },
+          'channel' => '/meta/handshake'
+        }
+        expected_message = { 'channel' => '/meta/handshake' }
+        callback = Proc.new { |_message| expect(_message).to eq(expected_message) }
+        subject.incoming(message, nil, callback)
       end
     end
 
