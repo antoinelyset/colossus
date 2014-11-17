@@ -66,6 +66,11 @@ class Colossus
     engine.get_multi(user_ids.map(&:to_s))
   end
 
+  # Reset all the data (useful for specs)
+  def reset!
+    engine.reset!
+  end
+
   # Method used when the engine notify a change
   #
   # @!visibility private

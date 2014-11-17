@@ -49,6 +49,14 @@ class Colossus
         end
       end
 
+      def reset!
+        mutex.synchronize do
+          @client_sessions = Hash.new do |hash, key|
+            hash[key] = Colossus::Engine::Memory::ClientSessionStore.new
+          end
+        end
+      end
+
       def new_periodic_ttl
         secs_ttl = Colossus.config.seconds_before_ttl_check
         @periodic_ttl = EventMachine::PeriodicTimer.new(secs_ttl) do
