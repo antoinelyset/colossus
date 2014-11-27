@@ -1,5 +1,8 @@
-require 'observer'
+require 'faye'
 require 'openssl'
+require 'observer'
+require 'em-synchrony'
+require 'securerandom'
 
 require 'colossus/configuration'
 require 'colossus/verifier'
