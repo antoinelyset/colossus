@@ -5,6 +5,7 @@ require 'colossus/version'
 
 Gem::Specification.new do |s|
   s.name          = "colossus"
+  s.license       = "MIT"
   s.version       = Colossus::VERSION
   s.authors       = ["antoinelyset"]
   s.email         = ["antoinelyset+github@gmail.com"]
