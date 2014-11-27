@@ -1,0 +1,8 @@
+<script type="text/javascript" src="/js/colossus.js"></script>
+<script type="text/javascript">
+var USER_TOKEN = "<%= @user_token %>";
+var user_id    = "<%= @user_id %>";
+var client     = new Colossus("http://localhost:9292/colossus", user_id, USER_TOKEN);
+client.on('message', function(message) { console.log(message); });
+</script>
+HELLO WORLD

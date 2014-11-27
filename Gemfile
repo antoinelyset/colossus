@@ -3,17 +3,18 @@ source "https://rubygems.org"
 gemspec
 
 group :test, :development do
-  gem 'pry-byebug'
-  gem 'guard-rspec'
+  gem 'faye'
   gem 'goliath'
+  gem 'em-synchrony'
 end
 
 group :test do
+  gem 'guard-rspec'
   gem 'rspec'
-  gem 'em-synchrony'
-  gem 'faye'
 end
 
 group :development do
+  gem 'pry-byebug'
   gem 'rubocop'
+  gem 'erubis'
 end
