@@ -10,7 +10,7 @@ Gem::Specification.new do |s|
   s.email         = ["antoinelyset+github@gmail.com"]
   s.homepage      = "https://github.com/antoinelyset/colossus"
   s.summary       = "Colossus, Web Push & Presence made easy."
-  s.description   = "Colossus Server : Colossus is a pure Ruby Push and presence Web server. It uses Faye internally."
+  s.description   = "Colossus is a Push and Presence pure Ruby server. It uses Faye internally."
 
   s.files         = `git ls-files lib`.split("\n")
   s.platform      = Gem::Platform::RUBY

@@ -4,4 +4,4 @@
 
 ## Description
 
-Colossus is a pure Ruby Push and presence Web server. It uses Faye internally.
+Colossus is a Push and Presence pure Ruby server. It uses Faye internally.
