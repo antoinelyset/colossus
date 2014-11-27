@@ -2,20 +2,21 @@ require 'observer'
 require 'openssl'
 
 require 'colossus/configuration'
+require 'colossus/verifier'
+require 'colossus/writer_client'
 
 require 'colossus/engines/memory/memory'
 require 'colossus/engines/memory/client_session'
 require 'colossus/engines/memory/client_session_store'
 
 require 'colossus/faye/extension'
-require 'colossus/faye/verifier'
 
 # Top Level Class.
 # The public API of the Gem.
 class Colossus
   include Observable
 
-  attr_reader :engine
+  attr_reader :engine, :verifier
 
   # Initialize Colossus
   #
@@ -26,10 +27,13 @@ class Colossus
   #   to work with Colossus
   #
   # @return [Colossus]
-  def initialize(ttl    = Colossus.config.ttl,
-                 engine = Colossus.config.engine)
+  def initialize(ttl          = Colossus.config.ttl,
+                 engine       = Colossus.config.engine,
+                 secret       = Colossus.config.secret_key,
+                 writer_token = Colossus.config.writer_token)
     @engine = engine.new(ttl.to_i)
     @engine.add_observer(self)
+    @verifier = Colossus::Verifier.new(secret, writer_token)
   end
 
   # Set the status of a user on a specificed client. A client could be
@@ -66,9 +70,19 @@ class Colossus
     engine.get_multi(user_ids.map(&:to_s))
   end
 
+  # @return Hash{String => String} User_id keys, statuses values
+  def get_all
+    engine.get_all
+  end
+
   # Reset all the data (useful for specs)
   def reset!
     engine.reset!
+  end
+
+  # Generate a token for the given user_id
+  def generate_user_token(user_id)
+    verifier.generate_user_token(user_id)
   end
 
   # Method used when the engine notify a change

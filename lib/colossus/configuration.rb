@@ -4,14 +4,14 @@ class Colossus
   # Handles all the configuration
   class Configuration
     attr_accessor :ttl, :seconds_before_ttl_check, :engine,
-                  :verifier_secret, :verifier_writer_token
+                  :secret_key, :writer_token
 
     def initialize
-      @ttl  = 10
+      @ttl = 10
       @seconds_before_ttl_check = 2
       @engine = Colossus::Engine::Memory
-      @verifier_secret = ''
-      @verifier_writer_token = ''
+      @secret_key = ''
+      @writer_token = ''
     end
   end # class Configuration
 

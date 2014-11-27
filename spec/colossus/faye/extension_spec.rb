@@ -1,16 +1,19 @@
 describe Colossus::Faye::Extension do
-  let(:verifier_secret)       { 'A_RANDOM_KEY' }
-  let(:verifier_writer_token) { 'A_RANDOM_TOKEN' }
-  let(:sha1)                  { OpenSSL::Digest.new('sha1') }
-  let(:user_id)               { '1' }
-  let(:user_token)            { OpenSSL::HMAC.hexdigest(sha1, verifier_secret, user_id) }
-  let(:colossus_spy)          { spy('colossus') }
-  let(:token_verifier)        { Colossus::Faye::Verifier.new }
+  let(:secret_key)         { 'A_RANDOM_KEY' }
+  let(:writer_token)       { 'A_RANDOM_TOKEN' }
+  let(:sha1)               { OpenSSL::Digest.new('sha1') }
+  let(:user_id)            { '1' }
+  let(:user_token)         { OpenSSL::HMAC.hexdigest(sha1, secret_key, user_id) }
+  let(:token_verifier)     { Colossus::Verifier.new }
+  let(:colossus_double)    { double('colossus', verifier: token_verifier, set: true) }
+  let(:faye_client_double) { double('faye_client', publish: true, add_extension: true) }
+  let(:faye_double)        { double('faye', add_extension: true, get_client: faye_client_double) }
+  let(:subject)            { Colossus::Faye::Extension.new(faye_double, colossus_double) }
 
   before(:each) do
     Colossus.configure do |conf|
-      conf.verifier_secret = verifier_secret
-      conf.verifier_writer_token = verifier_writer_token
+      conf.secret_key = secret_key
+      conf.writer_token = writer_token
     end
   end
 
@@ -55,7 +58,7 @@ describe Colossus::Faye::Extension do
     context 'when this is an authorized meta channel' do
       it 'returns the channel' do
         message = {
-          'ext'     => { 'user_push_token' => user_token },
+          'ext'     => { 'user_token' => user_token },
           'channel' => '/meta/handshake'
         }
         expected_message = { 'channel' => '/meta/handshake' }
@@ -67,7 +70,7 @@ describe Colossus::Faye::Extension do
     context 'when this is a subscribe' do
       it 'returns an ok hash for a correct token' do
         message = {
-          'ext'     => { 'user_push_token' => user_token },
+          'ext'     => { 'user_token' => user_token },
           'channel' => '/meta/subscribe',
           'subscription' => "/users/#{user_id}"
         }
@@ -79,7 +82,7 @@ describe Colossus::Faye::Extension do
 
       it 'returns an error for a wrong token' do
         message = {
-          'ext'     => { 'user_push_token' => 'A_WRONG_TOKEN' },
+          'ext'     => { 'user_token' => 'A_WRONG_TOKEN' },
           'channel' => '/meta/subscribe',
           'subscription' => "/users/#{user_id}"
         }
@@ -94,7 +97,7 @@ describe Colossus::Faye::Extension do
       it 'returns an error for a wrong user_id (so a wrong token)' do
         user_id = '2'
         message = {
-          'ext'     => { 'user_push_token' => user_token },
+          'ext'     => { 'user_token' => user_token },
           'channel' => '/meta/subscribe',
           'subscription' => "/users/#{user_id}"
         }
@@ -109,7 +112,7 @@ describe Colossus::Faye::Extension do
       it 'returns an error for a glob user_id'  do
         user_id = '*'
         message = {
-          'ext'     => { 'user_push_token' => user_token },
+          'ext'     => { 'user_token' => user_token },
           'channel' => '/meta/subscribe',
           'subscription' => "/users/#{user_id}"
         }
@@ -123,7 +126,7 @@ describe Colossus::Faye::Extension do
 
       it 'returns an error for an incorrect channel'  do
         message = {
-          'ext'     => { 'user_push_token' => user_token },
+          'ext'     => { 'user_token' => user_token },
           'channel' => '/meta/subscribe',
           'subscription' => "/admins/#{user_id}"
         }
@@ -137,7 +140,7 @@ describe Colossus::Faye::Extension do
 
       it 'returns an error for a nested channel'  do
         message = {
-          'ext'     => { 'user_push_token' => user_token },
+          'ext'     => { 'user_token' => user_token },
           'channel' => '/meta/subscribe',
           'subscription' => "/users/admins/#{user_id}"
         }
@@ -153,7 +156,7 @@ describe Colossus::Faye::Extension do
     context 'when this is a set status' do
       it 'returns an ok hash for a correct token' do
         message = {
-          'ext'     => { 'user_push_token' => user_token },
+          'ext'     => { 'user_token' => user_token },
           'channel' => "/users/#{user_id}",
           'data'    => { 'status' => 'active' }
         }
@@ -164,18 +167,18 @@ describe Colossus::Faye::Extension do
 
       it 'calls colossus for a correct token' do
         message = {
-          'ext'     => { 'user_push_token' => user_token },
+          'ext'     => { 'user_token' => user_token },
           'channel' => "/users/#{user_id}",
           'data'    => { 'status' => 'active' }
         }
         callback = Proc.new {}
-        subject.class.new(colossus_spy, token_verifier).incoming(message, nil, callback)
-        expect(colossus_spy).to have_received(:set)
+        subject.incoming(message, nil, callback)
+        expect(colossus_double).to have_received(:set)
       end
 
       it 'returns an error for an incorrect status' do
         message = {
-          'ext'     => { 'user_push_token' => user_token },
+          'ext'     => { 'user_token' => user_token },
           'channel' => "/users/#{user_id}",
           'data'    => { 'status' => 'RANDOM_STATUS' }
         }
@@ -189,7 +192,7 @@ describe Colossus::Faye::Extension do
 
       it 'returns an error for a wrong token' do
         message = {
-          'ext'     => { 'user_push_token' => 'A_WRONG_TOKEN' },
+          'ext'     => { 'user_token' => 'A_WRONG_TOKEN' },
           'channel' => "/users/#{user_id}",
           'data'    => { 'status' => 'active' }
         }
@@ -204,7 +207,7 @@ describe Colossus::Faye::Extension do
       it 'returns an error for a wrong user_id (so a wrong token)' do
         user_id = '2'
         message = {
-          'ext'     => { 'user_push_token' => user_token },
+          'ext'     => { 'user_token' => user_token },
           'channel' => "/users/#{user_id}",
           'data'    => { 'status' => 'active' }
         }
@@ -219,7 +222,7 @@ describe Colossus::Faye::Extension do
       it 'returns an error for a glob user_id'  do
         user_id = '*'
         message = {
-          'ext'     => { 'user_push_token' => user_token },
+          'ext'     => { 'user_token' => user_token },
           'channel' => "/users/#{user_id}",
           'data'    => { 'status' => 'active' }
         }
@@ -233,7 +236,7 @@ describe Colossus::Faye::Extension do
 
       it 'returns an error for an incorrect channel'  do
         message = {
-          'ext'     => { 'user_push_token' => user_token },
+          'ext'     => { 'user_token' => user_token },
           'channel' => "/admins/#{user_id}",
           'data'    => { 'status' => 'active' }
         }
@@ -247,7 +250,7 @@ describe Colossus::Faye::Extension do
 
       it 'returns an error for a nested channel'  do
         message = {
-          'ext'     => { 'user_push_token' => user_token },
+          'ext'     => { 'user_token' => user_token },
           'channel' => "/users/admins/#{user_id}",
           'data'    => { 'status' => 'active' }
         }
@@ -262,59 +265,59 @@ describe Colossus::Faye::Extension do
   end
   context 'when there is a server token' do
     context 'when this is a presence request' do
-      it 'returns a Hash of statuses in the data' do
+      it 'returns an ok' do
         message = {
-          'ext'     => { 'writer_token' => verifier_writer_token },
-          'channel' => '/presences',
+          'ext'     => { 'writer_token' => writer_token },
+          'channel' => '/presences/request/',
           'data'    => { 'user_ids' => ['1', '2'] }
         }
         expected_message = {
-          'channel' => '/presences',
-          'data'    => { 'statuses' => { '1' => 'active', '2' => 'active' } }
+          'channel' => '/presences/request/',
+          'data'    => {  }
         }
-        colossus_double = double
         allow(colossus_double).to receive(:get_multi).and_return(['active', 'active'])
+        allow(colossus_double).to receive(:verifier).and_return(token_verifier)
         callback = Proc.new { |_message| expect(_message).to eq(expected_message) }
-        subject.class.new(colossus_double, token_verifier).incoming(message, nil, callback)
+        subject.incoming(message, nil, callback)
       end
 
-      it 'returns a error if the user_ids are not an array' do
+      it 'returns ok if the user_ids are not an array' do
         message = {
-          'ext'     => { 'writer_token' => verifier_writer_token },
-          'channel' => '/presences',
+          'ext'     => { 'writer_token' => writer_token },
+          'channel' => '/presences/request/',
           'data'    => { 'user_ids' => '1' }
         }
         expected_message = {
-          'channel' => '/presences',
+          'channel' => '/presences/request/',
           'error'   => 'Invalid user_ids data'
         }
-        colossus_double = double
         allow(colossus_double).to receive(:get_multi).and_return(['active', 'active'])
+        allow(colossus_double).to receive(:verifier).and_return(token_verifier)
         callback = Proc.new { |_message| expect(_message).to eq(expected_message) }
-        subject.class.new(colossus_double, token_verifier).incoming(message, nil, callback)
+        subject.incoming(message, nil, callback)
       end
 
-      it 'returns a error if there is no user_ids' do
+      it 'returns an ok if no user_ids' do
         message = {
-          'ext'     => { 'writer_token' => verifier_writer_token },
-          'channel' => '/presences',
+          'ext'     => { 'writer_token' => writer_token },
+          'channel' => '/presences/request/',
           'data'    => { }
         }
         expected_message = {
-          'channel' => '/presences',
-          'error'   => 'Invalid user_ids data'
+          'channel' => '/presences/request/',
+          'data'    => { }
         }
-        colossus_double = double
-        allow(colossus_double).to receive(:get_multi).and_return(['active', 'active'])
+        allow(colossus_double).to receive(:get_all).and_return({'user_id' => 'active', 'user_id_bis' => 'away'})
+        allow(colossus_double).to receive(:verifier).and_return(token_verifier)
         callback = Proc.new { |_message| expect(_message).to eq(expected_message) }
-        subject.class.new(colossus_double, token_verifier).incoming(message, nil, callback)
+        subject.incoming(message, nil, callback)
       end
     end
 
     context 'when this is an authorized meta channel' do
       it 'returns the channel' do
         message = {
-          'ext'     => { 'user_push_token' => user_token },
+          'ext'     => { 'user_token' => user_token },
           'channel' => '/meta/handshake'
         }
         expected_message = { 'channel' => '/meta/handshake' }
@@ -326,7 +329,7 @@ describe Colossus::Faye::Extension do
     context 'when this is publish' do
       it 'returns the data' do
         message = {
-          'ext'     => { 'writer_token' => verifier_writer_token },
+          'ext'     => { 'writer_token' => writer_token },
           'channel' => "/users/#{user_id}",
           'data'    => 'lol'
         }
@@ -341,7 +344,7 @@ describe Colossus::Faye::Extension do
       it 'accepts globing' do
         user_id = '*'
         message = {
-          'ext'     => { 'writer_token' => verifier_writer_token },
+          'ext'     => { 'writer_token' => writer_token },
           'channel' => "/users/#{user_id}",
           'data'    => 'lol'
         }

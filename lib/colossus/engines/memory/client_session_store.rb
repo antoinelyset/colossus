@@ -4,7 +4,8 @@ class Colossus
       # Represents all the different sessions of a user. It can find
       #  the global status of the user given all the different status.
       class ClientSessionStore
-        attr_reader :sessions, :last_status
+        attr_reader :last_status
+        attr_accessor :sessions
 
         def initialize
           @sessions = Hash.new do |hash, key|

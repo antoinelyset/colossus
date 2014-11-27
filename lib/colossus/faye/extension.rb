@@ -3,14 +3,18 @@ class Colossus
     # Faye extension implementing all the presence, authorization,
     # authentification and push logic.
     class Extension
-      attr_reader :colossus, :token_verifier
+      attr_reader :colossus, :faye, :faye_client
 
       VALID_STATUSES = %w(disconnected away active).freeze
 
-      def initialize(colossus       = Colossus.new,
-                     token_verifier = Colossus::Faye::Verifier.new)
-        @colossus       = colossus
-        @token_verifier = token_verifier
+      def initialize(faye, colossus = Colossus.new)
+        @colossus = colossus
+        @faye     = faye
+        faye.add_extension(self)
+        @faye_client = faye.get_client
+        colossus_faye_extension = Colossus::WriterClient::FayeExtension.
+          new(colossus.verifier.writer_token)
+        faye_client.add_extension(colossus_faye_extension)
       end
 
       def incoming(message, _request, callback)
@@ -18,7 +22,7 @@ class Colossus
           handle_invalid_token(message)
           message.delete('data')
           message.delete('ext')
-        elsif message['ext']['user_push_token']
+        elsif message['ext']['user_token']
           handle_user_action(message)
           message.delete('data')
           message.delete('ext')
@@ -32,7 +36,7 @@ class Colossus
 
       def acceptable?(message)
         message['ext'] &&
-          (message['ext']['user_push_token'] ||
+          (message['ext']['user_token'] ||
            message['ext']['writer_token'])
       end
 
@@ -53,7 +57,7 @@ class Colossus
       def handle_server_action(message)
         token = message['ext'] && message['ext']['writer_token']
 
-        unless token && token_verifier.verify_writer_token(token)
+        unless token && colossus.verifier.verify_writer_token(token)
           message['error'] = 'Invalid Token'
           message.delete('data')
           return message
@@ -62,8 +66,10 @@ class Colossus
         if message['channel'].start_with?('/meta/')
           message.delete('data')
           message
-        elsif message['channel'] == '/presences'
+        elsif message['channel'].start_with?('/presences/request/')
           handle_presence_request(message)
+        elsif message['channel'].start_with?('/presences/response/')
+          handle_presence_response(message)
         elsif message['channel'].start_with?('/users/')
           handle_publish(message)
         else
@@ -75,17 +81,26 @@ class Colossus
       end
 
       def handle_presence_request(message)
-        user_ids = message['data'] && message['data']['user_ids']
+        user_ids    = message['data'] && message['data']['user_ids']
+        presence_id = message['channel'].partition('/presences/request/').last
 
-        unless user_ids && user_ids.is_a?(Array)
-          message['error'] = 'Invalid user_ids data'
+        if user_ids && user_ids.is_a?(Array)
+          statuses = colossus.get_multi(user_ids)
+          message['data'].delete('user_ids')
+          faye_client.publish("/presences/response/#{presence_id}", { 'statuses' => Hash[user_ids.zip(statuses)] })
+          message
+        elsif user_ids == nil
+          statuses = colossus.get_all
+          faye_client.publish("/presences/response/#{presence_id}", { 'statuses' => statuses })
+          message
+        else
           message.delete('data')
-          return message
+          message['error'] = 'Invalid user_ids data'
+          message
         end
+      end
 
-        statuses = colossus.get_multi(user_ids)
-        message['data'] = { 'statuses' => Hash[user_ids.zip(statuses)] }
-
+      def handle_presence_response(message)
         message
       end
 
@@ -99,7 +114,7 @@ class Colossus
       end
 
       def handle_subscribe(message)
-        token   = message['ext']['user_push_token']
+        token   = message['ext']['user_token']
         user_id = message['subscription'].partition('/users/').last
 
         if invalid_user_channel?(user_id)
@@ -107,7 +122,7 @@ class Colossus
           return message
         end
 
-        unless token_verifier.verify_token(token, user_id)
+        unless colossus.verifier.verify_token(token, user_id)
           message['error'] = 'Invalid Token'
         end
 
@@ -115,7 +130,7 @@ class Colossus
       end
 
       def handle_set_status(message)
-        token   = message['ext']['user_push_token']
+        token   = message['ext']['user_token']
         user_id = message['channel'].partition('/users/').last
         status  = message['data'] && message['data']['status']
 
@@ -129,7 +144,7 @@ class Colossus
           return message
         end
 
-        unless token_verifier.verify_token(token, user_id)
+        unless colossus.verifier.verify_token(token, user_id)
           message['error'] = 'Invalid Token'
           return message
         end

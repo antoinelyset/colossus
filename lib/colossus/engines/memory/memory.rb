@@ -23,15 +23,20 @@ class Colossus
 
       def set(user_id, client_id, given_status)
         mutex.synchronize do
-          client_sessions[user_id][client_id] = given_status
+          if given_status == 'disconnected'
+            client_sessions[user_id].delete(client_id)
+          else
+            client_sessions[user_id][client_id] = given_status
+          end
         end
 
         if client_sessions[user_id].status_changed?
-          given_status = client_sessions[user_id].status
-          delete(user_id) if given_status == 'disconnected'
-          user_changed(user_id, given_status)
+          status = client_sessions[user_id].status
+          delete(user_id) if status == 'disconnected'
+          user_changed(user_id, status)
           return true
         end
+
         false
       end
 
@@ -41,6 +46,14 @@ class Colossus
 
       def get_multi(*user_ids)
         user_ids.map { |user_id| get(user_id) }
+      end
+
+      def get_all
+        statuses = {}
+        client_sessions.each_pair do |user_id, session_store|
+          statuses[user_id] = session_store.status
+        end
+        statuses
       end
 
       def delete(user_id)
@@ -59,9 +72,19 @@ class Colossus
 
       def new_periodic_ttl
         secs_ttl = Colossus.config.seconds_before_ttl_check
-        @periodic_ttl = EventMachine::PeriodicTimer.new(secs_ttl) do
-          client_sessions.each_pair do |user_id, sessions|
-            if (sessions.last_seen + ttl) < Time.now
+        @periodic_ttl = EM::Synchrony.add_periodic_timer(secs_ttl) do
+          client_sessions.each_pair do |user_id, session_store|
+            sessions_dupped = session_store.sessions.dup
+
+            session_store.sessions.each_pair do |session_id, session|
+              if (session.last_seen + ttl) < Time.now
+                sessions_dupped.delete(session_id)
+              end
+            end
+
+            mutex.synchronize { session_store.sessions = sessions_dupped }
+
+            if (session_store.last_seen + ttl) < Time.now
               delete(user_id)
               user_changed(user_id, 'disconnected')
             end

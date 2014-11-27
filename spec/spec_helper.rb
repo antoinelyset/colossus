@@ -4,7 +4,7 @@ Bundler.require(:default, :test)
 require_relative './support/goliath.rb'
 
 Colossus.configure do |conf|
-  conf.verifier_secret = 'please'
+  conf.secret_key = 'please'
 end
 
 class SpecObserver
@@ -24,17 +24,15 @@ class ClientExtension
   end
   def outgoing(message, callback)
     message['ext'] ||= {}
-    message['ext']['user_push_token'] = token
+    message['ext']['user_token'] = token
 
     callback.call(message)
   end
 end
 
 Faye::WebSocket.load_adapter('goliath')
-ColossusFayeExtension = Colossus::Faye::Extension.new
-App = Faye::RackAdapter.new(extensions: [ColossusFayeExtension],
-                            mount:      '/colossus',
-                            timeout:    25)
+App = Faye::RackAdapter.new(mount: '/colossus', timeout: 25)
+ColossusFayeExtension = Colossus::Faye::Extension.new(App)
 
 class FayeExtensionTTLPlugin
   def initialize(address, port, config, status, logger); end
