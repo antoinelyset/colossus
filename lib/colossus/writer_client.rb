@@ -18,6 +18,23 @@ class Colossus
       end
     end
 
+    def get_presences_by_http(optional_user_ids = nil)
+      user_ids = Array(optional_user_ids) if optional_user_ids
+      # Custom Content-Type to indicate to the server
+      # this is a simple http request
+      conn     = Faraday.new(url, headers: {'Content-Type' => 'application/vnd.http.json'}) do |conf|
+        conf.adapter  Faraday.default_adapter
+        conf.response :raise_error
+      end
+
+      body = conn.post do |req|
+        req.body = JSON.dump({ user_ids: user_ids, writer_token: writer_token})
+      end.body
+
+      response = JSON.parse(body)
+      response['statuses']
+    end
+
     def push_message(user_ids, message)
       user_ids = Array(user_ids)
       EM.synchrony do

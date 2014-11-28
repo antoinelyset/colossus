@@ -19,4 +19,5 @@ Gem::Specification.new do |s|
 
   s.add_dependency('faye',         '~> 1.0')
   s.add_dependency('em-synchrony', '~> 1.0')
+  s.add_dependency('faraday',      '~> 0')
 end
