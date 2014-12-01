@@ -2594,6 +2594,14 @@ var Colossus = function(url        , userId        , userToken        ) {
   this.fayeClient.subscribe(this.userUrl, function(message)  {
     this.emit("message", message);
   }.bind(this));
+
+  this.fayeClient.on("transport:down", function()  {
+    this.emit("statusChanged", "disconnected");
+  }.bind(this));
+
+  this.fayeClient.on("transport:up", function()  {
+    this.emit("statusChanged", "connected");
+  }.bind(this));
 };
 
 Colossus.prototype.heartbeat = function() {

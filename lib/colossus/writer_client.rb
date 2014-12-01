@@ -2,7 +2,9 @@ class Colossus
   class WriterClient
     attr_reader :url, :writer_token, :time_out
 
-    def initialize(url, writer_token, time_out = 2)
+    def initialize(url,
+                   writer_token = Colossus.config.writer_token,
+                   time_out = 2)
       @url          = url
       @writer_token = writer_token
       @time_out     = time_out

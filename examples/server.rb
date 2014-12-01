@@ -14,6 +14,7 @@ end
 Faye::WebSocket.load_adapter('goliath')
 App = Faye::RackAdapter.new(mount: '/colossus', timeout: 25)
 ColossusFayeExtension = Colossus::Faye::Extension.new(App)
+ColossusHTTP = Colossus::SimplePresenceGetter.new(ColossusFayeExtension.colossus)
 
 class UserChangedStatusObserver
   def update(user_id, status)
@@ -42,11 +43,19 @@ class GoliathServer < Goliath::API
 
   def response(env)
     if env['PATH_INFO'] == "/colossus"
-      App.call(env)
-    elsif env['PATH_INFO'] == '/'
-      [200, {}, RubyTemplate.evaluate(context)]
+      if env['CONTENT_TYPE'] == 'application/vnd.http.json'
+        parsed = JSON.parse(env['rack.input'].read)
+        statuses = ColossusHTTP.get_presences(parsed['writer_token'], parsed['user_ids'])
+        [200, {}, JSON.dump(statuses: statuses)]
+      else
+        App.call(env)
+      end
     else
-      RackFile.call(env)
+      if env['PATH_INFO'] == "/"
+        [200, {}, RubyTemplate.evaluate(context)]
+      else
+        RackFile.call(env)
+      end
     end
   end
 end
