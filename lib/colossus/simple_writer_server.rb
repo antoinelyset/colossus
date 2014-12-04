@@ -63,7 +63,6 @@ class Colossus
       def outgoing(message, callback)
         message['ext'] ||= {}
         message['ext']['writer_token'] = writer_token
-        puts message
 
         callback.call(message)
       end
