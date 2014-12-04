@@ -2,14 +2,15 @@ require 'faye'
 require 'json'
 require 'openssl'
 require 'faraday'
+require 'faraday_middleware'
 require 'observer'
 require 'em-synchrony'
 require 'securerandom'
 
 require 'colossus/configuration'
 require 'colossus/verifier'
-require 'colossus/writer_client'
-require 'colossus/simple_presence_getter'
+require 'colossus/http_writer_client'
+require 'colossus/simple_writer_server'
 
 require 'colossus/engines/memory/memory'
 require 'colossus/engines/memory/client_session'
@@ -65,7 +66,7 @@ class Colossus
   #
   # @param user_id [#to_s] The unique identifier of a user
   #
-  # @return status [String]
+  # @return Hash{String => String} User_id key, status value
   def get(user_id)
     engine.get(user_id.to_s)
   end
@@ -76,7 +77,7 @@ class Colossus
     engine.get_multi(user_ids.map(&:to_s))
   end
 
-  # @return Hash{String => String} User_id keys, statuses values
+  # (see #get)
   def get_all
     engine.get_all
   end

@@ -1,13 +1,13 @@
 describe 'end to end colossus usage' do
   include TestHelper
 
-  let(:sha)             { OpenSSL::Digest.new('sha1') }
-  let(:verifier_secret) { 'please' }
-  let(:user_id)         { '1337' }
-  let(:token)           { OpenSSL::HMAC.hexdigest(sha, verifier_secret, user_id) }
-  let(:extension)       { ClientExtension.new(token) }
-  let(:err)             { Proc.new { fail "API request failed" } }
-  before(:each)         { ColossusFayeExtension.colossus.reset! }
+  let(:sha)        { OpenSSL::Digest.new('sha1') }
+  let(:secret_key) { 'SECRET_KEY' }
+  let(:user_id)    { '1337' }
+  let(:token)      { OpenSSL::HMAC.hexdigest(sha, secret_key, user_id) }
+  let(:extension)  { ClientExtension.new(token) }
+  let(:err)        { Proc.new { fail "API request failed" } }
+  before(:each)    { ColossusFayeExtension.colossus.reset! }
 
   it 'should instanciate a server on the colossus path' do
     with_api(GoliathServer) do
@@ -23,7 +23,7 @@ describe 'end to end colossus usage' do
       client.add_extension(extension)
       publication = client.publish("/users/#{user_id}", {user_id: user_id, status: 'active'})
       publication.errback do |error|
-        fail
+        fail error.message
       end
 
       publication.callback do
@@ -44,7 +44,7 @@ describe 'end to end colossus usage' do
       client.add_extension(extension)
       publication = client.publish("/users/#{user_id}", {user_id: user_id, status: 'active'})
       publication.errback do |error|
-        fail
+        fail error.message
       end
     end
   end
@@ -60,7 +60,7 @@ describe 'end to end colossus usage' do
       client.add_extension(extension)
       publication = client.publish("/users/#{user_id}", {user_id: user_id, status: 'active'})
       publication.errback do |error|
-        fail
+        fail error.message
       end
     end
   end

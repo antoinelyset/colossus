@@ -41,11 +41,17 @@ class Colossus
       end
 
       def get(user_id)
-        client_sessions[user_id]
+        if client_sessions.has_key?(user_id)
+          { user_id => client_sessions[user_id].status }
+        else
+          { user_id => 'disconnected' }
+        end
       end
 
       def get_multi(*user_ids)
-        user_ids.map { |user_id| get(user_id) }
+        statuses = {}
+        user_ids.each { |user_id| statuses[user_id] = get(user_id) }
+        statuses
       end
 
       def get_all

@@ -4,7 +4,8 @@ Bundler.require(:default, :test)
 require_relative './support/goliath.rb'
 
 Colossus.configure do |conf|
-  conf.secret_key = 'please'
+  conf.secret_key   = 'SECRET_KEY'
+  conf.writer_token = 'WRITER_TOKEN'
 end
 
 class SpecObserver
