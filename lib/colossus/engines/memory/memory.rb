@@ -49,9 +49,7 @@ class Colossus
       end
 
       def get_multi(*user_ids)
-        statuses = {}
-        user_ids.each { |user_id| statuses[user_id] = get(user_id) }
-        statuses
+        user_ids.inject({}) { |memo, user_id| memo.merge!(get(user_id)) }
       end
 
       def get_all

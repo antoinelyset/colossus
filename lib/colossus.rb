@@ -74,7 +74,7 @@ class Colossus
   # @param user_ids [Array<#to_s>] An array of user ids
   # (see #get)
   def get_multi(*user_ids)
-    engine.get_multi(user_ids.map(&:to_s))
+    engine.get_multi(*user_ids.map(&:to_s))
   end
 
   # (see #get)

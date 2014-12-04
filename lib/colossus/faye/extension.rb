@@ -22,13 +22,16 @@ class Colossus
           handle_user_action(message)
           message.delete('data')
           message.delete('ext')
+        elsif message['ext']['writer_token']
+          message.delete('ext')
         end
 
         callback.call(message)
       end
 
       def acceptable?(message)
-        message['ext'] && message['ext']['user_token']
+        message['ext'] &&
+          (message['ext']['user_token'] || message['ext']['writer_token'])
       end
 
       def handle_user_action(message)

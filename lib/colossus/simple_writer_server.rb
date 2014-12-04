@@ -1,13 +1,17 @@
 class Colossus
   class SimpleWriterServer
-    attr_reader :faye_extension
+    attr_reader :faye_extension, :faye_client, :faye_client_extension
 
     def initialize(faye_extension)
-      @faye_extension = faye_extension
+      @faye_extension        = faye_extension
+      @faye_client           = faye_extension.faye.get_client
+      @faye_client_extension = FayeClientExtension.new
+      @faye_client.add_extension(faye_client_extension)
     end
 
     def presence(writer_token, optional_user_ids = nil)
       raise 'Invalid token' unless valid?(writer_token)
+      faye_client_extension.writer_token = writer_token
 
       case optional_user_ids
       when Array
@@ -23,6 +27,7 @@ class Colossus
 
     def push(writer_token, user_ids, message)
       raise 'Invalid token' unless valid?(writer_token)
+      faye_client_extension.writer_token = writer_token
 
       case user_ids
       when Array
@@ -40,12 +45,28 @@ class Colossus
       colossus.verifier.verify_writer_token(writer_token)
     end
 
-    def faye_client
-      faye_extension.faye.get_client
-    end
-
     def colossus
       faye_extension.colossus
+    end
+
+    class FayeClientExtension
+      attr_accessor :writer_token
+
+      def initialize(writer_token = nil)
+        @writer_token = writer_token
+      end
+
+      def incoming(message, callback)
+        callback.call(message)
+      end
+
+      def outgoing(message, callback)
+        message['ext'] ||= {}
+        message['ext']['writer_token'] = writer_token
+        puts message
+
+        callback.call(message)
+      end
     end
   end
 end
