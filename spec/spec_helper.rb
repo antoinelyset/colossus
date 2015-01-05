@@ -10,9 +10,11 @@ end
 
 class SpecObserver
   attr_reader :spec
+
   def initialize(&spec)
     @spec = spec
   end
+
   def update(given_user_id, given_status)
     spec.call(given_user_id, given_status)
   end
