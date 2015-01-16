@@ -1,5 +1,5 @@
 describe Colossus::Engine::Memory do
-  let(:subject) { Colossus::Engine::Memory.new(4) }
+  let(:subject) { described_class.new(4) }
 
   describe '#gc_ttl' do
     before(:each) do
@@ -64,6 +64,32 @@ describe Colossus::Engine::Memory do
       subject.set('user_id', 'client_id', 'active')
       subject.set('user_id', 'client_id', 'disconnected')
       expect(subject.client_sessions.length).to eq(0)
+    end
+
+    it 'calls user_changed when a user get active' do
+      obs = SpecObserver.new do |user_id, status|
+        expect([user_id, status]).to eq(['user_id', 'active'])
+      end
+      subject.add_observer(obs)
+      subject.set('user_id', 'client_id', 'active')
+    end
+
+    it 'calls user_changed when a user get disconnected' do
+      subject.set('user_id', 'client_id', 'active')
+      obs = SpecObserver.new do |user_id, status|
+        expect([user_id, status]).to eq(['user_id', 'disconnected'])
+      end
+      subject.set('user_id', 'client_id', 'disconnected')
+      subject.add_observer(obs)
+    end
+
+    it 'calls user_changed when a user get disconnected' do
+      subject.set('user_id', 'client_id', 'active')
+      obs = SpecObserver.new do |user_id, status|
+        expect([user_id, status]).to eq(['user_id', 'disconnected'])
+      end
+      subject.set('user_id', 'client_id', 'disconnected')
+      subject.add_observer(obs)
     end
   end
 end

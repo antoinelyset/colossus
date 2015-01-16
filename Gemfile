@@ -6,6 +6,9 @@ group :test, :development do
   gem 'faye'
   gem 'goliath'
   gem 'em-synchrony'
+  platform :mri do
+    gem 'memory_profiler'
+  end
 end
 
 group :test do
@@ -14,7 +17,9 @@ group :test do
 end
 
 group :development do
-  gem 'pry-byebug'
+  platform :mri do
+    gem 'pry-byebug'
+  end
   gem 'rubocop'
   gem 'erubis'
 end

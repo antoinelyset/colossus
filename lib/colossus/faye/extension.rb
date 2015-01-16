@@ -13,7 +13,7 @@ class Colossus
         faye.add_extension(self)
       end
 
-      def incoming(message, _request, callback)
+      def incoming(message, callback)
         if !acceptable?(message)
           handle_invalid_token(message)
           message.delete('data')

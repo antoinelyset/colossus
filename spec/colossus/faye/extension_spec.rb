@@ -22,35 +22,35 @@ describe Colossus::Faye::Extension do
       message          =  {}
       expected_message =  {'error' => 'Invalid Token' }
       callback = Proc.new { |_message| expect(_message).to eq(expected_message) }
-      subject.incoming(message, nil, callback)
+      subject.incoming(message, callback)
     end
 
     it 'should removes data field' do
       message          =  {'data' => 'TEST'}
       expected_message =  {'error' => 'Invalid Token' }
       callback = Proc.new { |_message| expect(_message).to eq(expected_message) }
-      subject.incoming(message, nil, callback)
+      subject.incoming(message, callback)
     end
 
     it 'should removes ext field' do
       message          =  {'ext' => 'TEST'}
       expected_message =  {'error' => 'Invalid Token' }
       callback = Proc.new { |_message| expect(_message).to eq(expected_message) }
-      subject.incoming(message, nil, callback)
+      subject.incoming(message, callback)
     end
 
     it 'should removes data ext field' do
       message          =  {'ext' => 'TEST', 'data' => 'TEST'}
       expected_message =  {'error' => 'Invalid Token' }
       callback = Proc.new { |_message| expect(_message).to eq(expected_message) }
-      subject.incoming(message, nil, callback)
+      subject.incoming(message, callback)
     end
 
     it 'should keeps other fields' do
       message          =  {'ext' => 'TEST', 'data' => 'TEST', 'other' => 'TEST'}
       expected_message =  {'error' => 'Invalid Token', 'other' => 'TEST'}
       callback = Proc.new { |_message| expect(_message).to eq(expected_message) }
-      subject.incoming(message, nil, callback)
+      subject.incoming(message, callback)
     end
   end
 
@@ -63,7 +63,7 @@ describe Colossus::Faye::Extension do
         }
         expected_message = { 'channel' => '/meta/handshake' }
         callback = Proc.new { |_message| expect(_message).to eq(expected_message) }
-        subject.incoming(message, nil, callback)
+        subject.incoming(message, callback)
       end
     end
 
@@ -77,7 +77,7 @@ describe Colossus::Faye::Extension do
         expected_message = { 'channel' => '/meta/subscribe',
                              'subscription' => "/users/#{user_id}" }
         callback = Proc.new { |_message| expect(_message).to eq(expected_message) }
-        subject.incoming(message, nil, callback)
+        subject.incoming(message, callback)
       end
 
       it 'returns an error for a wrong token' do
@@ -91,7 +91,7 @@ describe Colossus::Faye::Extension do
                              'error' => 'Invalid Token'
         }
         callback = Proc.new { |_message| expect(_message).to eq(expected_message) }
-        subject.incoming(message, nil, callback)
+        subject.incoming(message, callback)
       end
 
       it 'returns an error for a wrong user_id (so a wrong token)' do
@@ -106,7 +106,7 @@ describe Colossus::Faye::Extension do
                              'error' => 'Invalid Token'
         }
         callback = Proc.new { |_message| expect(_message).to eq(expected_message) }
-        subject.incoming(message, nil, callback)
+        subject.incoming(message, callback)
       end
 
       it 'returns an error for a glob user_id'  do
@@ -121,7 +121,7 @@ describe Colossus::Faye::Extension do
                              'error' => 'The only accepted channel_name is users/:user_id'
         }
         callback = Proc.new { |_message| expect(_message).to eq(expected_message) }
-        subject.incoming(message, nil, callback)
+        subject.incoming(message, callback)
       end
 
       it 'returns an error for an incorrect channel'  do
@@ -135,7 +135,7 @@ describe Colossus::Faye::Extension do
                              'error' => 'The only accepted channel_name is users/:user_id'
         }
         callback = Proc.new { |_message| expect(_message).to eq(expected_message) }
-        subject.incoming(message, nil, callback)
+        subject.incoming(message, callback)
       end
 
       it 'returns an error for a nested channel'  do
@@ -149,7 +149,7 @@ describe Colossus::Faye::Extension do
                              'error' => 'The only accepted channel_name is users/:user_id'
         }
         callback = Proc.new { |_message| expect(_message).to eq(expected_message) }
-        subject.incoming(message, nil, callback)
+        subject.incoming(message, callback)
       end
     end
 
@@ -162,7 +162,7 @@ describe Colossus::Faye::Extension do
         }
         expected_message = { 'channel' => "/users/#{user_id}" }
         callback = Proc.new { |_message| expect(_message).to eq(expected_message) }
-        subject.incoming(message, nil, callback)
+        subject.incoming(message, callback)
       end
 
       it 'calls colossus for a correct token' do
@@ -172,7 +172,7 @@ describe Colossus::Faye::Extension do
           'data'    => { 'status' => 'active' }
         }
         callback = Proc.new {}
-        subject.incoming(message, nil, callback)
+        subject.incoming(message, callback)
         expect(colossus_double).to have_received(:set)
       end
 
@@ -187,7 +187,7 @@ describe Colossus::Faye::Extension do
           'error' => 'Invalid Status'
         }
         callback = Proc.new { |_message| expect(_message).to eq(expected_message) }
-        subject.incoming(message, nil, callback)
+        subject.incoming(message, callback)
       end
 
       it 'returns an error for a wrong token' do
@@ -201,7 +201,7 @@ describe Colossus::Faye::Extension do
           'error' => 'Invalid Token'
         }
         callback = Proc.new { |_message| expect(_message).to eq(expected_message) }
-        subject.incoming(message, nil, callback)
+        subject.incoming(message, callback)
       end
 
       it 'returns an error for a wrong user_id (so a wrong token)' do
@@ -216,7 +216,7 @@ describe Colossus::Faye::Extension do
           'error' => 'Invalid Token'
         }
         callback = Proc.new { |_message| expect(_message).to eq(expected_message) }
-        subject.incoming(message, nil, callback)
+        subject.incoming(message, callback)
       end
 
       it 'returns an error for a glob user_id'  do
@@ -231,7 +231,7 @@ describe Colossus::Faye::Extension do
           'error' => 'The only accepted channel_name is users/:user_id'
         }
         callback = Proc.new { |_message| expect(_message).to eq(expected_message) }
-        subject.incoming(message, nil, callback)
+        subject.incoming(message, callback)
       end
 
       it 'returns an error for an incorrect channel'  do
@@ -245,7 +245,7 @@ describe Colossus::Faye::Extension do
           'error' => 'Unknown Action'
         }
         callback = Proc.new { |_message| expect(_message).to eq(expected_message) }
-        subject.incoming(message, nil, callback)
+        subject.incoming(message, callback)
       end
 
       it 'returns an error for a nested channel'  do
@@ -259,7 +259,7 @@ describe Colossus::Faye::Extension do
           'error' => 'The only accepted channel_name is users/:user_id'
         }
         callback = Proc.new { |_message| expect(_message).to eq(expected_message) }
-        subject.incoming(message, nil, callback)
+        subject.incoming(message, callback)
       end
     end
   end
