@@ -7,6 +7,7 @@ require 'faraday_middleware'
 require 'observer'
 require 'em-synchrony'
 require 'securerandom'
+require 'thread_safe'
 
 require 'colossus/configuration'
 require 'colossus/verifier'
@@ -16,6 +17,10 @@ require 'colossus/simple_writer_server'
 require 'colossus/engines/memory/memory'
 require 'colossus/engines/memory/client_session'
 require 'colossus/engines/memory/client_session_store'
+
+require 'colossus/engines/memory_thread_safe/memory'
+require 'colossus/engines/memory_thread_safe/client_session'
+require 'colossus/engines/memory_thread_safe/client_session_store'
 
 require 'colossus/faye/extension'
 
