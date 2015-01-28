@@ -1,6 +1,7 @@
 require 'faye'
 require 'json'
 require 'openssl'
+require 'monitor'
 require 'faraday'
 require 'faraday_middleware'
 require 'observer'

@@ -1,20 +1,20 @@
 class Colossus
   module Engine
-    # The Memory Engine is a non-distributed engine.
+    # The Memory Engine is a non-distributed, in process, threadsafe engine.
     # Based on EventMachine in order to provide the ttl to
     # disconnect clients.
     class Memory
       include Observable
 
-      attr_reader :client_sessions, :ttl, :mutex
+      attr_reader :client_sessions, :ttl, :monitor
 
       # @param [Integer/Float] ttl TTL in seconds
       def initialize(ttl)
         @client_sessions = Hash.new do |hash, key|
           hash[key] = Colossus::Engine::Memory::ClientSessionStore.new
         end
-        @ttl       = ttl
-        @mutex     = Mutex.new
+        @ttl     = ttl
+        @monitor = Monitor.new
       end
 
       def user_changed(user_id, status)
@@ -23,7 +23,7 @@ class Colossus
       end
 
       def set(user_id, client_id, given_status)
-        mutex.synchronize do
+        synchronize do
           if given_status == 'disconnected'
             client_sessions[user_id].delete(client_id)
           else
@@ -63,13 +63,13 @@ class Colossus
       end
 
       def delete(user_id)
-        mutex.synchronize do
+        synchronize do
           client_sessions.delete(user_id)
         end
       end
 
       def reset!
-        mutex.synchronize do
+        synchronize do
           @client_sessions = Hash.new do |hash, key|
             hash[key] = Colossus::Engine::Memory::ClientSessionStore.new
           end
@@ -93,7 +93,7 @@ class Colossus
             end
           end
 
-          mutex.synchronize { session_store.sessions = sessions_dupped }
+          synchronize { session_store.sessions = sessions_dupped }
 
           if (session_store.last_seen + ttl) < Time.now
             user_ids_to_delete << user_id
@@ -108,6 +108,10 @@ class Colossus
           delete(user_id)
           user_changed(user_id, 'disconnected')
         end
+      end
+
+      def synchronize(&block)
+        monitor.synchronize(&block)
       end
     end
   end
