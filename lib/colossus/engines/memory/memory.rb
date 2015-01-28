@@ -1,12 +1,12 @@
 class Colossus
   module Engine
-    # The Memory Engine is a non-distributed, in process, threadsafe engine.
+    # The Memory Engine is a non-distributed, in process, non-threadsafe engine.
     # Based on EventMachine in order to provide the ttl to
     # disconnect clients.
     class Memory
       include Observable
 
-      attr_reader :client_sessions, :ttl, :monitor
+      attr_reader :client_sessions, :ttl
 
       # @param [Integer/Float] ttl TTL in seconds
       def initialize(ttl)
@@ -14,7 +14,6 @@ class Colossus
           hash[key] = Colossus::Engine::Memory::ClientSessionStore.new
         end
         @ttl     = ttl
-        @monitor = Monitor.new
       end
 
       def user_changed(user_id, status)
@@ -23,12 +22,10 @@ class Colossus
       end
 
       def set(user_id, client_id, given_status)
-        synchronize do
-          if given_status == DISCONNECTED
-            client_sessions[user_id].delete(client_id)
-          else
-            client_sessions[user_id][client_id] = given_status
-          end
+        if given_status == DISCONNECTED
+          client_sessions[user_id].delete(client_id)
+        else
+          client_sessions[user_id][client_id] = given_status
         end
 
         if client_sessions[user_id].sessions.empty? ||
@@ -63,16 +60,12 @@ class Colossus
       end
 
       def delete(user_id)
-        synchronize do
-          client_sessions.delete(user_id)
-        end
+        client_sessions.delete(user_id)
       end
 
       def reset!
-        synchronize do
-          @client_sessions = Hash.new do |hash, key|
-            hash[key] = Colossus::Engine::Memory::ClientSessionStore.new
-          end
+        @client_sessions = Hash.new do |hash, key|
+          hash[key] = Colossus::Engine::Memory::ClientSessionStore.new
         end
       end
 
@@ -85,15 +78,9 @@ class Colossus
         user_ids_to_delete = []
 
         client_sessions.each_pair do |user_id, session_store|
-          sessions_dupped = session_store.sessions.dup
-
-          session_store.sessions.each_pair do |session_id, session|
-            if (session.last_seen + ttl) < Time.now
-              sessions_dupped.delete(session_id)
-            end
+          session_store.sessions.delete_if do |session_id, session|
+            (session.last_seen + ttl) < Time.now
           end
-
-          synchronize { session_store.sessions = sessions_dupped }
 
           if (session_store.last_seen + ttl) < Time.now
             user_ids_to_delete << user_id
@@ -108,10 +95,6 @@ class Colossus
           delete(user_id)
           user_changed(user_id, DISCONNECTED)
         end
-      end
-
-      def synchronize(&block)
-        monitor.synchronize(&block)
       end
     end
   end
