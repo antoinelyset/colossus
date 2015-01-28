@@ -6,7 +6,7 @@ class Colossus
         attr_reader :status, :last_seen
 
         def initialize
-          @status = 'disconnected'
+          @status = DISCONNECTED
           @last_seen = Time.now
         end
 

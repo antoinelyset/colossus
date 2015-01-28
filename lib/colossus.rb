@@ -24,6 +24,10 @@ require 'colossus/faye/extension'
 class Colossus
   include Observable
 
+  ACTIVE       = 'active'.freeze
+  AWAY         = 'away'.freeze
+  DISCONNECTED = 'disconnected'.freeze
+
   attr_reader :engine, :verifier
 
   # Initialize Colossus

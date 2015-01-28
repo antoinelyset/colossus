@@ -24,7 +24,7 @@ class Colossus
 
       def set(user_id, client_id, given_status)
         synchronize do
-          if given_status == 'disconnected'
+          if given_status == DISCONNECTED
             client_sessions[user_id].delete(client_id)
           else
             client_sessions[user_id][client_id] = given_status
@@ -34,7 +34,7 @@ class Colossus
         if client_sessions[user_id].sessions.empty? ||
             client_sessions[user_id].status_changed?
           status = client_sessions[user_id].status
-          delete(user_id) if status == 'disconnected'
+          delete(user_id) if status == DISCONNECTED
           user_changed(user_id, status)
           return true
         end
@@ -46,7 +46,7 @@ class Colossus
         if client_sessions.has_key?(user_id)
           { user_id => client_sessions[user_id].status }
         else
-          { user_id => 'disconnected' }
+          { user_id => DISCONNECTED }
         end
       end
 
@@ -106,7 +106,7 @@ class Colossus
       def delete_expired_users(user_ids)
         user_ids.each do |user_id|
           delete(user_id)
-          user_changed(user_id, 'disconnected')
+          user_changed(user_id, DISCONNECTED)
         end
       end
 

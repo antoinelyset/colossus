@@ -11,16 +11,16 @@ class Colossus
           @sessions = Hash.new do |hash, key|
             hash[key] = Colossus::Engine::Memory::ClientSession.new
           end
-          @last_status = 'disconnected'
+          @last_status = DISCONNECTED
         end
 
         def status
-          sessions.values.reduce('disconnected') do |memo, session|
+          sessions.values.reduce(DISCONNECTED) do |memo, session|
             case session.status
-            when 'active'
+            when ACTIVE
               session.status
-            when 'away'
-              memo == 'active' ? memo : session.status
+            when AWAY
+              memo == ACTIVE ? memo : session.status
             else
               memo
             end
