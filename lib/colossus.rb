@@ -22,6 +22,8 @@ require 'colossus/engines/memory_thread_safe/memory'
 require 'colossus/engines/memory_thread_safe/client_session'
 require 'colossus/engines/memory_thread_safe/client_session_store'
 
+require 'colossus/engines/memory_monitor/memory'
+
 require 'colossus/faye/extension'
 
 # Top Level Class.
