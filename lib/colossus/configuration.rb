@@ -9,7 +9,7 @@ class Colossus
     def initialize
       @ttl = 10
       @seconds_before_ttl_check = 2
-      @engine = Colossus::Engine::Memory
+      @engine = Colossus::Engine::MemoryThreadSafe
       @secret_key = ''
       @writer_token = ''
     end
